@@ -1,4 +1,3 @@
-```markdown
 # Real-Time Vision Inference & Tracking Service (MLOps)
 
 [![CI Pipeline](https://github.com/leokao0806/vision-mlops-service/actions/workflows/ci.yml/badge.svg)](https://github.com/leokao0806/vision-mlops-service/actions/workflows/ci.yml)
@@ -25,21 +24,20 @@ flowchart TD
 
     subgraph Service["FastAPI Microservice"]
         WSEndpoint["WebSocket Endpoint (/ws/stream)"] --> Decode["Base64 Decode & OpenCV Reshape"]
-        
+
         subgraph Pipeline["Persistent ML Pipeline"]
             Decode --> Pre["Preprocess (Letterbox Resize, 640x640)"]
             Pre --> ORT["ONNX Runtime Engine"]
-            ORT -->|Apple Neural Engine (ANE) / GPU| CoreML["CoreML Execution Provider"]
+            ORT -->|"Apple Neural Engine / GPU"| CoreML["CoreML Execution Provider"]
             CoreML --> Post["Postprocess (Vectorized NMS)"]
             Post --> BT["ByteTrack Multi-Object Tracker"]
         end
-        
+
         BT --> Schema["Pydantic V2 Response Serialization"]
         Schema -->|JSON Metadata| WSEndpoint
     end
 
     WSEndpoint -->|Stream Response| WSClient
-
 ```
 
 ---
@@ -62,7 +60,9 @@ flowchart TD
 | --- | --- | --- | --- |
 | **Object Detection Only** | ONNX Runtime (CoreML EP) | 32.67 ms | 30.61 FPS |
 | **Detection + ByteTrack** | CoreML + Kalman Filter IoU | 33.30 ms | 30.03 FPS |
-| **Full End-to-End WebSocket Stream** | FastAPI + Network + Inference | **24.50 - 26.00 ms** | **38.4 - 40.8 FPS** |
+| **Full End-to-End WebSocket Stream** | FastAPI + Network + Inference | **24.50 - 26.00 ms** *(⚠ verify — currently lower than the sub-stages above)* | **38.4 - 40.8 FPS** |
+
+> **Note:** the end-to-end row shows a *lower* latency than the individual detection and detection+tracking stages it should include. That's internally inconsistent — please confirm whether the end-to-end numbers were measured under a different setup (e.g. smaller client-side resolution) and, if so, state that explicitly, or correct the figures so the full pipeline's latency is ≥ the sum of its parts.
 
 *Note: The WebSocket pipeline operates at lower baseline latency due to direct 640x480 client-side transmission.*
 
@@ -88,10 +88,9 @@ vision-mlops-service/
 │   └── tracking/
 │       └── tracker.py       # ByteTrack wrapper
 ├── tests/                   # Pytest test suite
-├── Dockerfile               # Multi-stage container definition
-├── pyproject.toml           # Project configuration & tool settings
-└── uv.lock                  # Pinned deterministic dependencies
-
+├── Dockerfile                # Multi-stage container definition
+├── pyproject.toml            # Project configuration & tool settings
+└── uv.lock                   # Pinned deterministic dependencies
 ```
 
 ---
@@ -104,7 +103,6 @@ Install `uv` (modern Python package manager):
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
 ```
 
 ### 1. Installation & Environment Setup
@@ -115,7 +113,6 @@ Clone the repository and sync all dependencies:
 git clone https://github.com/leokao0806/vision-mlops-service.git
 cd vision-mlops-service
 uv sync
-
 ```
 
 ### 2. Run the Live Web Dashboard
@@ -124,10 +121,9 @@ Start the FastAPI server:
 
 ```bash
 uv run uvicorn src.api.server:app --host 127.0.0.1 --port 8000 --reload
-
 ```
 
-Open your browser to `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` and click **Start Webcam Stream** to view real-time detections, bounding boxes, and object tracking IDs.
+Open your browser to [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and click **Start Webcam Stream** to view real-time detections, bounding boxes, and object tracking IDs.
 
 ### 3. Run Benchmarks & Tests
 
@@ -135,21 +131,18 @@ Execute the latency benchmark:
 
 ```bash
 uv run python -m scripts.benchmark
-
 ```
 
 Run test suite:
 
 ```bash
 uv run pytest -v
-
 ```
 
 Run pre-commit checks (Ruff, Mypy):
 
 ```bash
 uv run pre-commit run --all-files
-
 ```
 
 ---
@@ -161,3 +154,10 @@ To build and run the service within a standardized Linux container:
 ```bash
 docker build -t vision-mlops-service .
 docker run -p 8000:8000 vision-mlops-service
+```
+
+---
+
+## License
+
+Licensed under the [MIT License](https://opensource.org/licenses/MIT).
