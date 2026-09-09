@@ -73,10 +73,11 @@ class YOLODetector:
         indices = cv2.dnn.NMSBoxes(
             boxes, scores, self.conf_threshold, self.iou_threshold
         )
+        indices_arr = np.asarray(indices).flatten()
 
         results: list[dict[str, Any]] = []
-        if len(indices) > 0:
-            for idx in indices.flatten():
+        if indices_arr.size > 0:
+            for idx in indices_arr:
                 x, y, w, h = boxes[idx]
                 results.append(
                     {
