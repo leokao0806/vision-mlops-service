@@ -17,6 +17,7 @@ dependencies = [
     "supervision>=0.30.2",
     "ultralytics>=8.4.144",
     "uvicorn[standard]>=0.52.4",
+    "websockets>=17.1",
 ]
 
 [project.scripts]
@@ -28,9 +29,11 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.16.6",
 ]
 
@@ -49,3 +52,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
